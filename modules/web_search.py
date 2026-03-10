@@ -1,10 +1,15 @@
 import asyncio
+import os
+import ssl
 from datetime import datetime
 from duckduckgo_search import DDGS
 from config import DDGS_MAX_RESULTS
 from utils.models import PersonResult
 
 SOURCE_NAME = "web"
+
+os.environ["PYTHONHTTPSVERIFY"] = "0"
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 async def fetch(query: str) -> PersonResult:

@@ -1,8 +1,13 @@
 import aiohttp
+import ssl
 from datetime import datetime
 from config import VK_TOKEN, VK_API_BASE, VK_API_VERSION
 from utils.models import PersonResult
 from utils.rate_limiter import rate_limited
+
+SSL_CONTEXT = ssl.create_default_context()
+SSL_CONTEXT.check_hostname = False
+SSL_CONTEXT.verify_mode = ssl.CERT_NONE
 
 SOURCE_NAME = "vk"
 
@@ -11,7 +16,7 @@ SEARCH_FIELDS = "photo_200,city,country,bdate,education,contacts,site,status,fol
 
 async def _vk_request(session: aiohttp.ClientSession, method: str, params: dict) -> dict:
     params = {**params, "access_token": VK_TOKEN, "v": VK_API_VERSION}
-    async with session.get(f"{VK_API_BASE}/{method}", params=params) as resp:
+    async with session.get(f"{VK_API_BASE}/{method}", params=params, ssl=SSL_CONTEXT) as resp:
         resp.raise_for_status()
         data = await resp.json()
         if "error" in data:

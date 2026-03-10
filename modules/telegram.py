@@ -14,11 +14,21 @@ async def fetch(query: str) -> PersonResult:
     data = {}
 
     try:
-        async with TelegramClient(TG_SESSION_NAME, int(TG_API_ID), TG_API_HASH) as client:
-            data = await _collect(client, query)
+        skip = input("Telegram — пропустить? (Enter = пропустить, n = войти): ").strip().lower()
+        if skip != "n":
+            return PersonResult(source=SOURCE_NAME, found=False, data={"skipped": True}, errors=[], timestamp=datetime.now())
+
+        client = TelegramClient(TG_SESSION_NAME, int(TG_API_ID), TG_API_HASH)
+        await client.start(phone=lambda: input("Введи номер телефона (например +79001234567): "))
+        print("Авторизация успешна!")
+        data = await _collect(client, query)
+        await client.disconnect()
+
     except FloodWaitError as e:
+        print(f"Telegram error: FloodWait {e.seconds}s")
         errors.append(f"Telegram flood wait: {e.seconds}s")
     except Exception as e:
+        print(f"Telegram error: {e}")
         errors.append(str(e))
 
     return PersonResult(
@@ -46,8 +56,8 @@ async def _collect(client: TelegramClient, query: str) -> dict:
             })
         result["users"] = users
     except Exception as e:
+        print(f"Telegram search error: {e}")
         result["users"] = []
-        result["users_error"] = str(e)
 
     if query.startswith("@"):
         username = query.lstrip("@")
@@ -66,6 +76,7 @@ async def _collect(client: TelegramClient, query: str) -> dict:
         except (UsernameInvalidError, UsernameNotOccupiedError):
             result["entity"] = None
         except Exception as e:
+            print(f"Telegram entity error: {e}")
             result["entity_error"] = str(e)
 
     return result

@@ -9,6 +9,8 @@ console = Console()
 
 def render_results(results: list[PersonResult]):
     for result in results:
+        if result.source == "telegram" and result.data.get("skipped"):
+            continue
         if result.source == "vk":
             _render_vk(result)
         elif result.source == "web":
