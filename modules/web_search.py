@@ -1,15 +1,15 @@
 import asyncio
-import os
+import aiohttp
 import ssl
 from datetime import datetime
-from duckduckgo_search import DDGS
-from config import DDGS_MAX_RESULTS
+from config import SERPAPI_KEY
 from utils.models import PersonResult
 
 SOURCE_NAME = "web"
 
-os.environ["PYTHONHTTPSVERIFY"] = "0"
-ssl._create_default_https_context = ssl._create_unverified_context
+SSL_CONTEXT = ssl.create_default_context()
+SSL_CONTEXT.check_hostname = False
+SSL_CONTEXT.verify_mode = ssl.CERT_NONE
 
 
 async def fetch(query: str) -> PersonResult:
@@ -17,8 +17,7 @@ async def fetch(query: str) -> PersonResult:
     results = []
 
     try:
-        loop = asyncio.get_event_loop()
-        results = await loop.run_in_executor(None, _search_sync, query)
+        results = await _search(query)
     except Exception as e:
         errors.append(str(e))
 
@@ -31,6 +30,23 @@ async def fetch(query: str) -> PersonResult:
     )
 
 
-def _search_sync(query: str) -> list[dict]:
-    with DDGS() as ddgs:
-        return list(ddgs.text(query, max_results=DDGS_MAX_RESULTS))
+async def _search(query: str) -> list[dict]:
+    params = {
+        "q": query,
+        "api_key": SERPAPI_KEY,
+        "engine": "google",
+        "num": 10,
+        "hl": "ru",
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://serpapi.com/search", params=params, ssl=SSL_CONTEXT) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+            results = []
+            for r in data.get("organic_results", []):
+                results.append({
+                    "title": r.get("title", ""),
+                    "href": r.get("link", ""),
+                    "body": r.get("snippet", ""),
+                })
+            return results

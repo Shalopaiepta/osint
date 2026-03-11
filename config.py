@@ -7,6 +7,7 @@ VK_TOKEN = os.getenv("VK_TOKEN")
 TG_API_ID = os.getenv("TG_API_ID")
 TG_API_HASH = os.getenv("TG_API_HASH")
 TG_SESSION_NAME = os.getenv("TG_SESSION_NAME", "osint_session")
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
 VK_API_VERSION = "5.131"
 VK_API_BASE = "https://api.vk.com/method"
@@ -20,6 +21,7 @@ def validate_config():
             "VK_TOKEN": VK_TOKEN,
             "TG_API_ID": TG_API_ID,
             "TG_API_HASH": TG_API_HASH,
+            "SERPAPI_KEY": SERPAPI_KEY,
         }.items() if not v
     ]
     if missing:
